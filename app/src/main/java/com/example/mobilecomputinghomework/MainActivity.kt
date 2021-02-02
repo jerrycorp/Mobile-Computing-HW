@@ -46,9 +46,6 @@ class MainActivity : AppCompatActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
             }
-            //startActivity(
-            //    Intent(applicationContext,RemainderList::class.java)
-            //)
         }
         findViewById<Button>(R.id.btnRegister).setOnClickListener {
             Log.d("Lab","Login Button Clicked")
