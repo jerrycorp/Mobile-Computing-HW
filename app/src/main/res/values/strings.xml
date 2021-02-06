@@ -4,4 +4,10 @@
     <string name="password">password</string>
     <string name="login">Login</string>
     <string name="register">Register</string>
+    <string name="logout">Logout</string>
+    <string name="profile_picture">profile picture</string>
+    <string name="nickname">Nickname</string>
+    <string name="favourite_number">Favourite Number</string>
+    <string name="new_password">New password</string>
+    <string name="update">Update</string>
 </resources>

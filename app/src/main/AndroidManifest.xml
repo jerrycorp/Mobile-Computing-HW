@@ -9,7 +9,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MobileComputingHomework">
-        <activity android:name=".profileActivity"></activity>
+        <activity android:name=".ProfileActivity"></activity>
         <activity android:name=".RemainderList" />
         <activity android:name=".MainActivity">
             <intent-filter>

@@ -29,10 +29,7 @@ class MainActivity : AppCompatActivity() {
                 ).show()
             }
             else if (pass == password) {
-                applicationContext.getSharedPreferences(
-                    "com.example.mobilecomputinghomework",
-                    Context.MODE_PRIVATE).edit().putString("loginUser", username).apply()
-                startActivity(Intent(applicationContext,RemainderList::class.java))
+                login(username)
                 Toast.makeText(
                     applicationContext,
                     "login succesful",
@@ -72,10 +69,7 @@ class MainActivity : AppCompatActivity() {
                 applicationContext.getSharedPreferences(
                     "com.example.mobilecomputinghomework",
                     Context.MODE_PRIVATE).edit().putString("pass$username", password).apply()
-                applicationContext.getSharedPreferences(
-                    "com.example.mobilecomputinghomework",
-                    Context.MODE_PRIVATE).edit().putString("loginUser", username).apply()
-                startActivity(Intent(applicationContext,RemainderList::class.java))
+                login(username)
                 Toast.makeText(
                     applicationContext,
                     "Succesfully registered and logged in",
@@ -94,6 +88,14 @@ class MainActivity : AppCompatActivity() {
             //)
         }
         checkLoginUser()
+    }
+
+    private fun login(username: String) {
+        applicationContext.getSharedPreferences(
+            "com.example.mobilecomputinghomework",
+            Context.MODE_PRIVATE).edit().putString("loginUser", username).apply()
+        findViewById<EditText>(R.id.password).setText("")
+        startActivity(Intent(applicationContext,RemainderList::class.java))
     }
 
     private fun checkLoginUser() {
