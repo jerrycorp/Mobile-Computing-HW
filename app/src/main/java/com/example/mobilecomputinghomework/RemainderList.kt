@@ -18,7 +18,7 @@ class RemainderList : AppCompatActivity() {
         val username = applicationContext.getSharedPreferences(
             "com.example.mobilecomputinghomework",
             Context.MODE_PRIVATE).getString("loginUser", "")
-        findViewById<TextView>(R.id.name).setText(username)
+        findViewById<TextView>(R.id.name).setText(getName(username!!))
 
         val reminderList = findViewById<ListView>(R.id.reminderList)
         var prods = listOf("hello", "bye")
@@ -30,6 +30,17 @@ class RemainderList : AppCompatActivity() {
         findViewById<ImageButton>(R.id.btnProfile).setOnClickListener {
             startActivity(Intent(applicationContext,ProfileActivity::class.java))
         }
+    }
+
+    private fun getName(username: String): String {
+        /*val storedNickname = applicationContext.getSharedPreferences(
+                "com.example.mobilecomputinghomework",
+                Context.MODE_PRIVATE).getString("nick$username", "")
+        if (storedNickname != "") {
+            return storedNickname!!
+        }
+        return username*/
+        return "hi"
     }
 
     private fun logout() {

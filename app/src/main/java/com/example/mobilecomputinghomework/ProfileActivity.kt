@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 
 class ProfileActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,7 +18,7 @@ class ProfileActivity : AppCompatActivity() {
             Context.MODE_PRIVATE).getString("loginUser", "")
         findViewById<TextView>(R.id.nameInProfile).setText(username)
 
-        updateProfile(username)
+        updateProfile(username!!)
 
         findViewById<Button>(R.id.btnRegister).setOnClickListener {
             var updated = false
@@ -27,6 +28,9 @@ class ProfileActivity : AppCompatActivity() {
             val storedFavouriteNumber = applicationContext.getSharedPreferences(
                 "com.example.mobilecomputinghomework",
                 Context.MODE_PRIVATE).getString("favn$username", "")
+            val storedPassword = applicationContext.getSharedPreferences(
+                    "com.example.mobilecomputinghomework",
+                    Context.MODE_PRIVATE).getString("pass$username", "")
             val nickname = findViewById<EditText>(R.id.nickname).getText().toString()
             val favouriteNumber = findViewById<EditText>(R.id.favouriteNumber).getText().toString()
             val newPassword = findViewById<EditText>(R.id.newPassword).getText().toString()
@@ -37,11 +41,25 @@ class ProfileActivity : AppCompatActivity() {
                     "com.example.mobilecomputinghomework",
                     Context.MODE_PRIVATE).edit().putString("nick$username", nickname).apply()
             }
-            if (nickname != "" && storedNickname != nickname) {
+            if (favouriteNumber != "" && storedFavouriteNumber != favouriteNumber) {
                 updated = true
                 applicationContext.getSharedPreferences(
                     "com.example.mobilecomputinghomework",
-                    Context.MODE_PRIVATE).edit().putString("nick$username", nickname).apply()
+                    Context.MODE_PRIVATE).edit().putString("nick$username", favouriteNumber).apply()
+            }
+            if (newPassword != "" && storedPassword != newPassword) {
+                updated = true
+                applicationContext.getSharedPreferences(
+                        "com.example.mobilecomputinghomework",
+                        Context.MODE_PRIVATE).edit().putString("nick$username", newPassword).apply()
+                findViewById<EditText>(R.id.newPassword).setText("")
+            }
+            if (updated) {
+                Toast.makeText(
+                        applicationContext,
+                        "User information updated",
+                        Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
