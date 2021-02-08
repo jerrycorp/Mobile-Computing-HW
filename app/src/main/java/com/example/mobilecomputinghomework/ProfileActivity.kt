@@ -20,7 +20,7 @@ class ProfileActivity : AppCompatActivity() {
 
         updateProfile(username!!)
 
-        findViewById<Button>(R.id.btnRegister).setOnClickListener {
+        findViewById<Button>(R.id.btnUpdate).setOnClickListener {
             var updated = false
             val storedNickname = applicationContext.getSharedPreferences(
                 "com.example.mobilecomputinghomework",
@@ -45,7 +45,7 @@ class ProfileActivity : AppCompatActivity() {
                 updated = true
                 applicationContext.getSharedPreferences(
                     "com.example.mobilecomputinghomework",
-                    Context.MODE_PRIVATE).edit().putString("nick$username", favouriteNumber).apply()
+                    Context.MODE_PRIVATE).edit().putString("favn$username", favouriteNumber).apply()
             }
             if (newPassword != "" && storedPassword != newPassword) {
                 updated = true

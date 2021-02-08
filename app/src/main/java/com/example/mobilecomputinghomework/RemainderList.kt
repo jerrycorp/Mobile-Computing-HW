@@ -33,13 +33,13 @@ class RemainderList : AppCompatActivity() {
     }
 
     private fun getName(username: String): String {
-        /*val storedNickname = applicationContext.getSharedPreferences(
+        val storedNickname = applicationContext.getSharedPreferences(
                 "com.example.mobilecomputinghomework",
                 Context.MODE_PRIVATE).getString("nick$username", "")
         if (storedNickname != "") {
             return storedNickname!!
         }
-        return username*/
+        return username
         return "hi"
     }
 
