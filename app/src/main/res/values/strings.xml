@@ -11,4 +11,5 @@
     <string name="new_password">New password</string>
     <string name="update">Update</string>
     <string name="plusSign">plussign</string>
+    <string name="firebase_db_url">https://mobilecomputing-hw-default-rtdb.firebaseio.com/</string>
 </resources>
