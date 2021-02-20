@@ -46,7 +46,6 @@ class RemainderList : AppCompatActivity() {
             return storedNickname!!
         }
         return username
-        return "hi"
     }
 
     private fun logout() {
