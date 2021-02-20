@@ -51,7 +51,7 @@ class ProfileActivity : AppCompatActivity() {
                 updated = true
                 applicationContext.getSharedPreferences(
                         "com.example.mobilecomputinghomework",
-                        Context.MODE_PRIVATE).edit().putString("nick$username", newPassword).apply()
+                        Context.MODE_PRIVATE).edit().putString("pass$username", newPassword).apply()
                 findViewById<EditText>(R.id.newPassword).setText("")
             }
             if (updated) {
