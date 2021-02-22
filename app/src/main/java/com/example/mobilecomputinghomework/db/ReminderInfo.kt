@@ -10,5 +10,5 @@ data class ReminderInfo(
         @PrimaryKey(autoGenerate = true) var uid: Int?,
         @ColumnInfo(name = "name") var name: String,
         @ColumnInfo(name = "date") var date: String,
-        @ColumnInfo(name = "time") var amount: String
+        @ColumnInfo(name = "time") var time: String
 )

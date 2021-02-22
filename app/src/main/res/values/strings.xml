@@ -15,4 +15,8 @@
     <string name="reminder_name">Reminder Name</string>
     <string name="reminder_date">reminder Date</string>
     <string name="reminder_time">Reminder time</string>
+    <string name="time">Time</string>
+    <string name="default_reminder_time">00:00</string>
+    <string name="date">Date</string>
+    <string name="save">save</string>
 </resources>
