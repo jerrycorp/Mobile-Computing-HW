@@ -12,4 +12,7 @@
     <string name="update">Update</string>
     <string name="plusSign">plussign</string>
     <string name="firebase_db_url">https://mobilecomputing-hw-default-rtdb.firebaseio.com/</string>
+    <string name="reminder_name">Reminder Name</string>
+    <string name="reminder_date">reminder Date</string>
+    <string name="reminder_time">Reminder time</string>
 </resources>

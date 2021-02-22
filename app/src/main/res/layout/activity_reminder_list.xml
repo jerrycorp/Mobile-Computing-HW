@@ -4,9 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".RemainderList">
+    tools:context=".ReminderList">
 
     <ListView
+        tools:listitem="@layout/reminder_item"
         android:id="@+id/reminderList"
         android:layout_width="411dp"
         android:layout_height="526dp"

@@ -10,7 +10,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MobileComputingHomework">
         <activity android:name=".ProfileActivity"></activity>
-        <activity android:name=".RemainderList" />
+        <activity android:name=".ReminderList" />
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

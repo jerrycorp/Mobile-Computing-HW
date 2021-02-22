@@ -95,13 +95,13 @@ class MainActivity : AppCompatActivity() {
             "com.example.mobilecomputinghomework",
             Context.MODE_PRIVATE).edit().putString("loginUser", username).apply()
         findViewById<EditText>(R.id.password).setText("")
-        startActivity(Intent(applicationContext,RemainderList::class.java))
+        startActivity(Intent(applicationContext,ReminderList::class.java))
     }
 
     private fun checkLoginUser() {
         val loginStatus = applicationContext.getSharedPreferences(
             "com.example.mobilecomputinghomework",
             Context.MODE_PRIVATE).getString("loginUser", "")
-        if (loginStatus != "") startActivity(Intent(applicationContext,RemainderList::class.java))
+        if (loginStatus != "") startActivity(Intent(applicationContext,ReminderList::class.java))
     }
 }

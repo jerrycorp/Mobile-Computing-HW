@@ -9,7 +9,6 @@ import androidx.room.PrimaryKey
 data class ReminderInfo(
         @PrimaryKey(autoGenerate = true) var uid: Int?,
         @ColumnInfo(name = "name") var name: String,
-        @ColumnInfo(name = "accountNumber") var accountNumber: String,
         @ColumnInfo(name = "date") var date: String,
-        @ColumnInfo(name = "amount") var amount: String
+        @ColumnInfo(name = "time") var amount: String
 )
