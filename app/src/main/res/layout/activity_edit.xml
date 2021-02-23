@@ -38,7 +38,7 @@
         android:id="@+id/textViewDateEdit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="264dp"
+        android:layout_marginTop="184dp"
         android:padding="5dp"
         android:textSize="30sp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -87,5 +87,40 @@
         app:layout_constraintHorizontal_bias="0.2"
         app:layout_constraintStart_toStartOf="@+id/btnSave"
         app:layout_constraintTop_toBottomOf="@+id/btnSave" />
+
+    <EditText
+        android:id="@+id/editTextreminderMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="@string/default_message"
+        app:layout_constraintEnd_toEndOf="@+id/editTextReminderName"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/editTextReminderName"
+        app:layout_constraintTop_toBottomOf="@+id/editTextReminderName"
+        android:importantForAutofill="no" />
+
+    <TextView
+        android:id="@+id/textViewcreationTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        app:layout_constraintBottom_toTopOf="@+id/btnSave"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:text="00:00 01.01.2021"
+        tools:visibility="gone" />
+
+    <TextView
+        android:id="@+id/textViewCreationTimeDescriptor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/time_created"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/textViewcreationTime"
+        app:layout_constraintStart_toStartOf="@+id/textViewcreationTime" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

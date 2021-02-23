@@ -64,6 +64,12 @@ class ReminderList : AppCompatActivity() {
             intent.putExtra("date", selectedReminder.date)
             intent.putExtra("time", selectedReminder.time)
             intent.putExtra("name", selectedReminder.name)
+            intent.putExtra("creation_time", selectedReminder.creation_time)
+            intent.putExtra("creator_id", selectedReminder.creator_id)
+            intent.putExtra("reminder_seen", selectedReminder.reminder_seen)
+            intent.putExtra("location_x", selectedReminder.location_x)
+            intent.putExtra("location_y", selectedReminder.location_y)
+            intent.putExtra("message", selectedReminder.message)
             startActivity(intent)
         }
     }
@@ -154,7 +160,13 @@ class ReminderList : AppCompatActivity() {
                         reminderInfo.key.toString(),
                         reminderInfo.child("name").value as String,
                         reminderInfo.child("date").value as String,
-                        reminderInfo.child("time").value as String
+                        reminderInfo.child("time").value as String,
+                        reminderInfo.child("message").value as String,
+                        reminderInfo.child("creation_time").value as String,
+                        reminderInfo.child("creator_id").value as String,
+                        reminderInfo.child("reminder_seen").value as String,
+                        reminderInfo.child("location_x").value as String,
+                        reminderInfo.child("location_y").value as String
                 ))
             }
             refreshListView()

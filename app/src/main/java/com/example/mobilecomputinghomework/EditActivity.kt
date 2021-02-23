@@ -18,7 +18,13 @@ import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 
 class EditActivity() : AppCompatActivity() {
+    private lateinit var creation_time: String
+    private lateinit var creator_id: String
+    private lateinit var reminder_seen: String
+    private lateinit var location_x: String
+    private lateinit var location_y: String
     private lateinit var key: String
+    private lateinit var message: String
     private lateinit var database: FirebaseDatabase
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,15 +39,33 @@ class EditActivity() : AppCompatActivity() {
         val textViewTimeEdit = findViewById<TextView>(R.id.textViewTimeEdit)
         val textViewDateEdit = findViewById<TextView>(R.id.textViewDateEdit)
         val editTextReminderName = findViewById<EditText>(R.id.editTextReminderName)
+        val editTextReminderMessage = findViewById<EditText>(R.id.editTextreminderMessage)
+
         val key: String? = intent.getStringExtra("key")
         val name: String? = intent.getStringExtra("name")
         val date: String? = intent.getStringExtra("date")
         val time: String? = intent.getStringExtra("time")
-        if (key != null && name != null && date != null && time != null) {
+        val message: String? = intent.getStringExtra("message")
+        val creation_time: String? = intent.getStringExtra("creation_time")
+        val creator_id: String? = intent.getStringExtra("creator_id")
+        val reminder_seen: String? = intent.getStringExtra("reminder_seen")
+        val location_x: String? = intent.getStringExtra("location_x")
+        val location_y: String? = intent.getStringExtra("location_y")
+        if (key != null && name != null && date != null && time != null && creation_time != null && creator_id != null && reminder_seen != null && location_x != null && location_y != null && message != null) {
             this.key = key
+            this.creation_time = creation_time
+            this.creator_id = creator_id
+            this.reminder_seen = reminder_seen
+            this.location_x = location_x
+            this.location_y = location_y
+            this.message = message
             textViewTimeEdit.text = time
             textViewDateEdit.text = date
             editTextReminderName.setText(name)
+            editTextReminderMessage.setText(message)
+            findViewById<TextView>(R.id.textViewcreationTime).setText(creation_time)
+            findViewById<TextView>(R.id.textViewcreationTime).visibility = View.VISIBLE
+            findViewById<TextView>(R.id.textViewCreationTimeDescriptor).visibility = View.VISIBLE
             val deleteBtn = findViewById<Button>(R.id.btnDeleteReminder)
             deleteBtn.visibility = View.VISIBLE
             deleteBtn.setOnClickListener {
@@ -52,17 +76,33 @@ class EditActivity() : AppCompatActivity() {
         }
         else {
             this.key = ""
+            this.creator_id = getLoggedInUsername()!!
+            this.reminder_seen = ""
+            this.location_x = ""
+            this.location_y = ""
         }
     }
 
     private fun save() {
-
+        if (key == "") {
+            this.creation_time = SimpleDateFormat("HH:mm dd.MM.yyyy").format(System.currentTimeMillis())
+        }
         val textViewTimeEdit = findViewById<TextView>(R.id.textViewTimeEdit)
         val textViewDateEdit = findViewById<TextView>(R.id.textViewDateEdit)
         val editTextReminderName = findViewById<EditText>(R.id.editTextReminderName)
-        uploadNewReminder(ReminderInfo(123,"", editTextReminderName.getText().toString(),
+        val editTextReminderMessage = findViewById<EditText>(R.id.editTextreminderMessage)
+        uploadNewReminder(ReminderInfo(123,
+                "",
+                editTextReminderName.getText().toString(),
                 textViewDateEdit.getText().toString(),
-                textViewTimeEdit.getText().toString())
+                textViewTimeEdit.getText().toString(),
+                editTextReminderMessage.getText().toString(),
+                creation_time,
+                creator_id,
+                reminder_seen,
+                location_x,
+                location_y
+        )
         )
         finish()
     }
@@ -96,7 +136,7 @@ class EditActivity() : AppCompatActivity() {
         //date picker
         val textViewDateEdit = findViewById<TextView>(R.id.textViewDateEdit)
         textViewDateEdit.text = SimpleDateFormat("dd.MM.yyyy").format(System.currentTimeMillis())
-        var cal = Calendar.getInstance()
+        val cal = Calendar.getInstance()
 
         val dateSetListener = DatePickerDialog.OnDateSetListener { view, year, monthOfYear, dayOfMonth ->
             cal.set(Calendar.YEAR, year)

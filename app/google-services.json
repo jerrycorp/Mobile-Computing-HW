@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "968067512740",
+    "firebase_url": "https://mobilecomputing-hw-default-rtdb.firebaseio.com",
+    "project_id": "mobilecomputing-hw",
+    "storage_bucket": "mobilecomputing-hw.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:968067512740:android:eabd1d7a79ef068712a931",
+        "android_client_info": {
+          "package_name": "com.example.mobilecomputinghomework"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "968067512740-uan8m8eqbufp0q9m39iqcmm5t290o8al.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBDLqqY9MWgjT3pbDqZ1tN2VYdwhoir34o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "968067512740-uan8m8eqbufp0q9m39iqcmm5t290o8al.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

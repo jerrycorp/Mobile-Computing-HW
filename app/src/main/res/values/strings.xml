@@ -20,4 +20,6 @@
     <string name="date">Date</string>
     <string name="save">save</string>
     <string name="delete">delete</string>
+    <string name="default_message">Message</string>
+    <string name="time_created">Time created</string>
 </resources>
