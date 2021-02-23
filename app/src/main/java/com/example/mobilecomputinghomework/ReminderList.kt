@@ -37,12 +37,12 @@ class ReminderList : AppCompatActivity() {
         database = Firebase.database(getString(R.string.firebase_db_url))
         loadReminderInfo()
 
-        val reference = database.getReference("data/stringList")
-        reference.push().setValue("hello")
+        //val reference = database.getReference("data/stringList")
+        //reference.push().setValue("hello")
 
-         var ri = ReminderInfo(123,"note", "date", "time")
-        val reference1 = database.getReference("data/"+ getLoggedInUsername() +"/reminderList")
-        reference1.push().setValue(ri)
+        //var ri = ReminderInfo(123,"note", "date", "time")
+        //val reference1 = database.getReference("data/"+ getLoggedInUsername() +"/reminderList")
+        //reference1.push().setValue(ri)
 
 
         //val prods = listOf("hello", "bye")
@@ -56,6 +56,15 @@ class ReminderList : AppCompatActivity() {
         }
         findViewById<ImageButton>(R.id.btnNewReminder).setOnClickListener {
             startActivity(Intent(applicationContext, EditActivity::class.java))
+        }
+        listView.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, id ->
+            val selectedReminder = listView.adapter.getItem(position) as ReminderInfo
+            val intent = Intent(this, EditActivity::class.java)
+            intent.putExtra("key", selectedReminder.key)
+            intent.putExtra("date", selectedReminder.date)
+            intent.putExtra("time", selectedReminder.time)
+            intent.putExtra("name", selectedReminder.name)
+            startActivity(intent)
         }
     }
 
@@ -89,21 +98,30 @@ class ReminderList : AppCompatActivity() {
     }
     override fun onResume() {
         super.onResume()
-        refreshListView()
+        updateNickname()
+        loadReminderInfo()
     }
 
     private fun refreshListView() {
-        var refreshTask = LoadReminderInfoEntries()
-        refreshTask.execute()
+        if (listOfReminders != null) {
+            if (listOfReminders.isNotEmpty()) {
+                val adaptor = ReminderAdaptor(applicationContext, listOfReminders)
+                listView.adapter = adaptor
+            } else {
+                listView.adapter = null
+                Toast.makeText(applicationContext, "No items now", Toast.LENGTH_SHORT).show()
+            }
+        }
+        //var refreshTask = LoadReminderInfoEntries()
+        //refreshTask.execute()
 
     }
     inner class LoadReminderInfoEntries : AsyncTask<String?, String?, List<ReminderInfo>>() {
         override fun doInBackground(vararg params: String?): List<ReminderInfo> {
-            //
-            //var reminderInfos = listOf()
+
             //val reference1 = database.getReference("data/"+ getLoggedInUsername() +"/reminderList")
             //reference1.get().addOnSuccessListener {
-            //    Log.i("firebase", "Got value ${it.value} ${it.children}")
+            //    Log.i("firebase", "Got value ${it.key}")
             //}.addOnFailureListener{
             //    Log.e("firebase", "Error getting data", it)
             //}
@@ -128,12 +146,15 @@ class ReminderList : AppCompatActivity() {
     private fun loadReminderInfo() {
         val reference1 = database.getReference("data/users/"+ getLoggedInUsername() +"/reminderList")
         reference1.get().addOnSuccessListener {
+            listOfReminders = mutableListOf<ReminderInfo>()
             for (reminderInfo in it.children) {
+                Log.i("firebase", "a child" + reminderInfo.child("name").value as String)
                 listOfReminders.add(ReminderInfo(
-                    (reminderInfo.child("uid").value as Long).toInt(),
-                    reminderInfo.child("name").value as String,
-                    reminderInfo.child("date").value as String,
-                    reminderInfo.child("time").value as String
+                        (reminderInfo.child("uid").value as Long).toInt(),
+                        reminderInfo.key.toString(),
+                        reminderInfo.child("name").value as String,
+                        reminderInfo.child("date").value as String,
+                        reminderInfo.child("time").value as String
                 ))
             }
             refreshListView()

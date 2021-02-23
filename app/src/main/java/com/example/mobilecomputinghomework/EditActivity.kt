@@ -5,6 +5,8 @@ import android.app.TimePickerDialog
 import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
+import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.TimePicker
@@ -12,32 +14,68 @@ import java.util.*
 import java.text.SimpleDateFormat
 import com.example.mobilecomputinghomework.db.ReminderInfo
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
 
-class EditActivity : AppCompatActivity() {
+class EditActivity() : AppCompatActivity() {
+    private lateinit var key: String
     private lateinit var database: FirebaseDatabase
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit)
-
+        database = Firebase.database(getString(R.string.firebase_db_url))
         setUpTimePickers()
-        setUpSaveButton()
-
+        findViewById<Button>(R.id.btnSave).setOnClickListener { save() }
+        updateExisting()
     }
 
-    private fun setUpSaveButton() {
+    private fun updateExisting() {
+        val textViewTimeEdit = findViewById<TextView>(R.id.textViewTimeEdit)
+        val textViewDateEdit = findViewById<TextView>(R.id.textViewDateEdit)
+        val editTextReminderName = findViewById<EditText>(R.id.editTextReminderName)
+        val key: String? = intent.getStringExtra("key")
+        val name: String? = intent.getStringExtra("name")
+        val date: String? = intent.getStringExtra("date")
+        val time: String? = intent.getStringExtra("time")
+        if (key != null && name != null && date != null && time != null) {
+            this.key = key
+            textViewTimeEdit.text = time
+            textViewDateEdit.text = date
+            editTextReminderName.setText(name)
+            val deleteBtn = findViewById<Button>(R.id.btnDeleteReminder)
+            deleteBtn.visibility = View.VISIBLE
+            deleteBtn.setOnClickListener {
+                val reference = database.getReference("data/users/"+ getLoggedInUsername() +"/reminderList/" + key)
+                reference.removeValue()
+                finish()
+            }
+        }
+        else {
+            this.key = ""
+        }
+    }
+
+    private fun save() {
 
         val textViewTimeEdit = findViewById<TextView>(R.id.textViewTimeEdit)
         val textViewDateEdit = findViewById<TextView>(R.id.textViewDateEdit)
         val editTextReminderName = findViewById<EditText>(R.id.editTextReminderName)
-        uploadNewReminder(ReminderInfo(123,textViewTimeEdit.toString(),
-            textViewDateEdit.toString(),
-            editTextReminderName.toString())
+        uploadNewReminder(ReminderInfo(123,"", editTextReminderName.getText().toString(),
+                textViewDateEdit.getText().toString(),
+                textViewTimeEdit.getText().toString())
         )
+        finish()
     }
 
     private fun uploadNewReminder(reminderInfo: ReminderInfo) {
-        val reference1 = database.getReference("data/"+ getLoggedInUsername() +"/reminderList")
-        reference1.push().setValue(reminderInfo)
+        if (key != "") {
+            val reference = database.getReference("data/users/"+ getLoggedInUsername() +"/reminderList/" + key)
+            reference.setValue(reminderInfo)
+        }
+        else {
+            val reference = database.getReference("data/users/"+ getLoggedInUsername() +"/reminderList")
+            reference.push().setValue(reminderInfo)
+        }
     }
 
     private fun setUpTimePickers() {
