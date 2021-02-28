@@ -66,7 +66,19 @@
         android:scaleY="0.7"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.2"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/reminderList"
         app:srcCompat="@mipmap/plus" />
+
+    <Switch
+        android:id="@+id/switchShowAll"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/show_all"
+        app:layout_constraintBottom_toBottomOf="@+id/btnNewReminder"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.8"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/btnNewReminder" />
 </androidx.constraintlayout.widget.ConstraintLayout>

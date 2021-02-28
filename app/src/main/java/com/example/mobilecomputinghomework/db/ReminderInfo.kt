@@ -12,6 +12,7 @@ data class ReminderInfo(
         @ColumnInfo(name = "name") var name: String,
         @ColumnInfo(name = "date") var date: String,
         @ColumnInfo(name = "time") var time: String,
+        @ColumnInfo(name = "timeInMillis") var timeInMillis: Long,
         @ColumnInfo(name = "message") var message: String,
         @ColumnInfo(name = "creation_time") var creation_time: String,
         @ColumnInfo(name = "creator_id") var creator_id: String,

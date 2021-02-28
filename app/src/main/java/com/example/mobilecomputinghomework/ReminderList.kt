@@ -19,6 +19,7 @@ class ReminderList : AppCompatActivity() {
     private lateinit var binding: ActivityReminderListBinding
     private lateinit var database: FirebaseDatabase
     private var listOfReminders = mutableListOf<ReminderInfo>()
+    private var shownListOfReminders = mutableListOf<ReminderInfo>()
     override fun onBackPressed() {
         finishAffinity()
     }
@@ -52,7 +53,7 @@ class ReminderList : AppCompatActivity() {
             logout()
         }
         findViewById<ImageButton>(R.id.btnProfile).setOnClickListener {
-            startActivity(Intent(applicationContext,ProfileActivity::class.java))
+            startActivity(Intent(applicationContext, ProfileActivity::class.java))
         }
         findViewById<ImageButton>(R.id.btnNewReminder).setOnClickListener {
             startActivity(Intent(applicationContext, EditActivity::class.java))
@@ -63,6 +64,7 @@ class ReminderList : AppCompatActivity() {
             intent.putExtra("key", selectedReminder.key)
             intent.putExtra("date", selectedReminder.date)
             intent.putExtra("time", selectedReminder.time)
+            intent.putExtra("timeInMillis", selectedReminder.timeInMillis)
             intent.putExtra("name", selectedReminder.name)
             intent.putExtra("creation_time", selectedReminder.creation_time)
             intent.putExtra("creator_id", selectedReminder.creator_id)
@@ -71,6 +73,9 @@ class ReminderList : AppCompatActivity() {
             intent.putExtra("location_y", selectedReminder.location_y)
             intent.putExtra("message", selectedReminder.message)
             startActivity(intent)
+        }
+        findViewById<Switch>(R.id.switchShowAll).setOnCheckedChangeListener { _, isChecked ->
+            loadReminderInfo()
         }
     }
 
@@ -109,9 +114,9 @@ class ReminderList : AppCompatActivity() {
     }
 
     private fun refreshListView() {
-        if (listOfReminders != null) {
-            if (listOfReminders.isNotEmpty()) {
-                val adaptor = ReminderAdaptor(applicationContext, listOfReminders)
+        if (shownListOfReminders != null) {
+            if (shownListOfReminders.isNotEmpty()) {
+                val adaptor = ReminderAdaptor(applicationContext, shownListOfReminders)
                 listView.adapter = adaptor
             } else {
                 listView.adapter = null
@@ -132,7 +137,7 @@ class ReminderList : AppCompatActivity() {
             //    Log.e("firebase", "Error getting data", it)
             //}
             //return listOf(ReminderInfo(123,"name", "date", "time"))
-            return listOfReminders
+            return shownListOfReminders
         }
 
         override fun onPostExecute(reminderInfos: List<ReminderInfo>?) {
@@ -161,6 +166,7 @@ class ReminderList : AppCompatActivity() {
                         reminderInfo.child("name").value as String,
                         reminderInfo.child("date").value as String,
                         reminderInfo.child("time").value as String,
+                        reminderInfo.child("timeInMillis").value as Long,
                         reminderInfo.child("message").value as String,
                         reminderInfo.child("creation_time").value as String,
                         reminderInfo.child("creator_id").value as String,
@@ -168,6 +174,19 @@ class ReminderList : AppCompatActivity() {
                         reminderInfo.child("location_x").value as String,
                         reminderInfo.child("location_y").value as String
                 ))
+            }
+            val showAll : Boolean = findViewById<Switch>(R.id.switchShowAll).isChecked
+            val currentTimeInMillis = System.currentTimeMillis()
+            shownListOfReminders = mutableListOf<ReminderInfo>()
+            for (reminderInfo in listOfReminders) {
+                Log.i("time", currentTimeInMillis.toString() + " " + reminderInfo.timeInMillis.toString())
+                if (showAll or (reminderInfo.timeInMillis < currentTimeInMillis)) {
+                    Log.i("time", "show this thing " + reminderInfo.name)
+                    shownListOfReminders.add(reminderInfo)
+                }
+                else {
+                    Log.i("time", "don't show this thing " + reminderInfo.name)
+                }
             }
             refreshListView()
         }.addOnFailureListener{

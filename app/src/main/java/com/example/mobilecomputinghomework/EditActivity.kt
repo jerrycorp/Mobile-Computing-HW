@@ -3,24 +3,25 @@ package com.example.mobilecomputinghomework
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Context
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
-import android.widget.TimePicker
-import java.util.*
-import java.text.SimpleDateFormat
+import androidx.appcompat.app.AppCompatActivity
 import com.example.mobilecomputinghomework.db.ReminderInfo
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.properties.Delegates
 
 class EditActivity() : AppCompatActivity() {
     private lateinit var creation_time: String
     private lateinit var creator_id: String
     private lateinit var reminder_seen: String
+    private var timeInMillis by Delegates.notNull<Long>()
     private lateinit var location_x: String
     private lateinit var location_y: String
     private lateinit var key: String
@@ -30,9 +31,9 @@ class EditActivity() : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit)
         database = Firebase.database(getString(R.string.firebase_db_url))
-        setUpTimePickers()
         findViewById<Button>(R.id.btnSave).setOnClickListener { save() }
         updateExisting()
+        setUpTimePickers()
     }
 
     private fun updateExisting() {
@@ -45,13 +46,14 @@ class EditActivity() : AppCompatActivity() {
         val name: String? = intent.getStringExtra("name")
         val date: String? = intent.getStringExtra("date")
         val time: String? = intent.getStringExtra("time")
+        val timeInMillis: Long? = intent.getLongExtra("timeInMillis", 0)
         val message: String? = intent.getStringExtra("message")
         val creation_time: String? = intent.getStringExtra("creation_time")
         val creator_id: String? = intent.getStringExtra("creator_id")
         val reminder_seen: String? = intent.getStringExtra("reminder_seen")
         val location_x: String? = intent.getStringExtra("location_x")
         val location_y: String? = intent.getStringExtra("location_y")
-        if (key != null && name != null && date != null && time != null && creation_time != null && creator_id != null && reminder_seen != null && location_x != null && location_y != null && message != null) {
+        if (key != null && name != null && date != null && time != null && creation_time != null && creator_id != null && reminder_seen != null && location_x != null && location_y != null && message != null &&timeInMillis != null) {
             this.key = key
             this.creation_time = creation_time
             this.creator_id = creator_id
@@ -59,6 +61,7 @@ class EditActivity() : AppCompatActivity() {
             this.location_x = location_x
             this.location_y = location_y
             this.message = message
+            this.timeInMillis = timeInMillis
             textViewTimeEdit.text = time
             textViewDateEdit.text = date
             editTextReminderName.setText(name)
@@ -80,6 +83,7 @@ class EditActivity() : AppCompatActivity() {
             this.reminder_seen = ""
             this.location_x = ""
             this.location_y = ""
+            this.timeInMillis = System.currentTimeMillis()
         }
     }
 
@@ -91,11 +95,15 @@ class EditActivity() : AppCompatActivity() {
         val textViewDateEdit = findViewById<TextView>(R.id.textViewDateEdit)
         val editTextReminderName = findViewById<EditText>(R.id.editTextReminderName)
         val editTextReminderMessage = findViewById<EditText>(R.id.editTextreminderMessage)
+        val date = textViewDateEdit.getText().toString()
+        val time = textViewTimeEdit.getText().toString()
+        timeInMillis = SimpleDateFormat("HH:mm dd.MM.yyyy", Locale.getDefault()).parse(time + " " + date).time
         uploadNewReminder(ReminderInfo(123,
                 "",
                 editTextReminderName.getText().toString(),
-                textViewDateEdit.getText().toString(),
-                textViewTimeEdit.getText().toString(),
+                date,
+                time,
+                timeInMillis,
                 editTextReminderMessage.getText().toString(),
                 creation_time,
                 creator_id,
@@ -146,6 +154,7 @@ class EditActivity() : AppCompatActivity() {
             val myFormat = "dd.MM.yyyy" // mention the format you need
             val sdf = SimpleDateFormat(myFormat, Locale.getDefault())
             textViewDateEdit.text = sdf.format(cal.time)
+
 
         }
 
