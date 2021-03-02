@@ -6,6 +6,7 @@ import android.content.Context
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -24,6 +25,7 @@ class EditActivity() : AppCompatActivity() {
     private var timeInMillis by Delegates.notNull<Long>()
     private lateinit var location_x: String
     private lateinit var location_y: String
+    private var makeNotification by Delegates.notNull<Boolean>()
     private lateinit var key: String
     private lateinit var message: String
     private lateinit var database: FirebaseDatabase
@@ -37,6 +39,7 @@ class EditActivity() : AppCompatActivity() {
     }
 
     private fun updateExisting() {
+
         val textViewTimeEdit = findViewById<TextView>(R.id.textViewTimeEdit)
         val textViewDateEdit = findViewById<TextView>(R.id.textViewDateEdit)
         val editTextReminderName = findViewById<EditText>(R.id.editTextReminderName)
@@ -53,6 +56,7 @@ class EditActivity() : AppCompatActivity() {
         val reminder_seen: String? = intent.getStringExtra("reminder_seen")
         val location_x: String? = intent.getStringExtra("location_x")
         val location_y: String? = intent.getStringExtra("location_y")
+        val makeNotification: Boolean = intent.getBooleanExtra("makeNotification", false)
         if (key != null && name != null && date != null && time != null && creation_time != null && creator_id != null && reminder_seen != null && location_x != null && location_y != null && message != null &&timeInMillis != null) {
             this.key = key
             this.creation_time = creation_time
@@ -62,6 +66,7 @@ class EditActivity() : AppCompatActivity() {
             this.location_y = location_y
             this.message = message
             this.timeInMillis = timeInMillis
+            this.makeNotification = makeNotification
             textViewTimeEdit.text = time
             textViewDateEdit.text = date
             editTextReminderName.setText(name)
@@ -69,6 +74,7 @@ class EditActivity() : AppCompatActivity() {
             findViewById<TextView>(R.id.textViewcreationTime).setText(creation_time)
             findViewById<TextView>(R.id.textViewcreationTime).visibility = View.VISIBLE
             findViewById<TextView>(R.id.textViewCreationTimeDescriptor).visibility = View.VISIBLE
+            findViewById<CheckBox>(R.id.notifcationCheck).isChecked = makeNotification
             val deleteBtn = findViewById<Button>(R.id.btnDeleteReminder)
             deleteBtn.visibility = View.VISIBLE
             deleteBtn.setOnClickListener {
@@ -104,6 +110,7 @@ class EditActivity() : AppCompatActivity() {
                 date,
                 time,
                 timeInMillis,
+                findViewById<CheckBox>(R.id.notifcationCheck).isChecked,
                 editTextReminderMessage.getText().toString(),
                 creation_time,
                 creator_id,

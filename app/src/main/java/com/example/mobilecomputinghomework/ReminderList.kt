@@ -1,17 +1,28 @@
 package com.example.mobilecomputinghomework
 
+import android.app.AlarmManager
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.AsyncTask
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.*
+import androidx.core.app.NotificationCompat
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.mobilecomputinghomework.databinding.ActivityReminderListBinding
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.example.mobilecomputinghomework.db.ReminderInfo
 import com.google.firebase.database.FirebaseDatabase
+import java.util.concurrent.TimeUnit
+import kotlin.random.Random
 
 class ReminderList : AppCompatActivity() {
 
@@ -66,6 +77,7 @@ class ReminderList : AppCompatActivity() {
             intent.putExtra("time", selectedReminder.time)
             intent.putExtra("timeInMillis", selectedReminder.timeInMillis)
             intent.putExtra("name", selectedReminder.name)
+            intent.putExtra("makeNotification", selectedReminder.makeNotification)
             intent.putExtra("creation_time", selectedReminder.creation_time)
             intent.putExtra("creator_id", selectedReminder.creator_id)
             intent.putExtra("reminder_seen", selectedReminder.reminder_seen)
@@ -155,42 +167,142 @@ class ReminderList : AppCompatActivity() {
 
     }
     private fun loadReminderInfo() {
-        val reference1 = database.getReference("data/users/"+ getLoggedInUsername() +"/reminderList")
-        reference1.get().addOnSuccessListener {
-            listOfReminders = mutableListOf<ReminderInfo>()
-            for (reminderInfo in it.children) {
-                Log.i("firebase", "a child" + reminderInfo.child("name").value as String)
-                listOfReminders.add(ReminderInfo(
-                        (reminderInfo.child("uid").value as Long).toInt(),
-                        reminderInfo.key.toString(),
-                        reminderInfo.child("name").value as String,
-                        reminderInfo.child("date").value as String,
-                        reminderInfo.child("time").value as String,
-                        reminderInfo.child("timeInMillis").value as Long,
-                        reminderInfo.child("message").value as String,
-                        reminderInfo.child("creation_time").value as String,
-                        reminderInfo.child("creator_id").value as String,
-                        reminderInfo.child("reminder_seen").value as String,
-                        reminderInfo.child("location_x").value as String,
-                        reminderInfo.child("location_y").value as String
-                ))
+        try {
+            val reference1 = database.getReference("data/users/" + getLoggedInUsername() + "/reminderList")
+            reference1.get().addOnSuccessListener {
+                listOfReminders = mutableListOf<ReminderInfo>()
+                for (reminderInfo in it.children) {
+                    Log.i("firebase", "a child" + reminderInfo.child("name").value as String)
+                    listOfReminders.add(ReminderInfo(
+                            (reminderInfo.child("uid").value as Long).toInt(),
+                            reminderInfo.key.toString(),
+                            reminderInfo.child("name").value as String,
+                            reminderInfo.child("date").value as String,
+                            reminderInfo.child("time").value as String,
+                            reminderInfo.child("timeInMillis").value as Long,
+                            reminderInfo.child("makeNotification").value as Boolean,
+                            reminderInfo.child("message").value as String,
+                            reminderInfo.child("creation_time").value as String,
+                            reminderInfo.child("creator_id").value as String,
+                            reminderInfo.child("reminder_seen").value as String,
+                            reminderInfo.child("location_x").value as String,
+                            reminderInfo.child("location_y").value as String
+                    ))
+                }
+                val showAll: Boolean = findViewById<Switch>(R.id.switchShowAll).isChecked
+                val currentTimeInMillis = System.currentTimeMillis()
+                shownListOfReminders = mutableListOf<ReminderInfo>()
+                for (reminderInfo in listOfReminders) {
+                    Log.i("time", currentTimeInMillis.toString() + " " + reminderInfo.timeInMillis.toString())
+                    if (showAll or (reminderInfo.timeInMillis < currentTimeInMillis)) {
+                        Log.i("time", "show this thing " + reminderInfo.name)
+                        shownListOfReminders.add(reminderInfo)
+                    } else {
+                        Log.i("time", "don't show this thing " + reminderInfo.name)
+                    }
+                }
+                refreshListView()
+                addNotifications()
+            }.addOnFailureListener {
+                Log.e("firebase", "Error getting data", it)
             }
-            val showAll : Boolean = findViewById<Switch>(R.id.switchShowAll).isChecked
+        }catch (e: java.lang.Exception){
+            database.goOnline()
+            loadReminderInfo()
+        }
+    }
+
+    private fun addNotifications() {
+        WorkManager.getInstance(applicationContext).cancelAllWork()
+        for (reminderInfo in listOfReminders) {
             val currentTimeInMillis = System.currentTimeMillis()
-            shownListOfReminders = mutableListOf<ReminderInfo>()
-            for (reminderInfo in listOfReminders) {
-                Log.i("time", currentTimeInMillis.toString() + " " + reminderInfo.timeInMillis.toString())
-                if (showAll or (reminderInfo.timeInMillis < currentTimeInMillis)) {
-                    Log.i("time", "show this thing " + reminderInfo.name)
-                    shownListOfReminders.add(reminderInfo)
-                }
-                else {
-                    Log.i("time", "don't show this thing " + reminderInfo.name)
-                }
+            if ((reminderInfo.timeInMillis > currentTimeInMillis) and (reminderInfo.makeNotification)) {
+                setReminderWithWorkManager(
+                        applicationContext,
+                        reminderInfo.uid!!,
+                        reminderInfo.timeInMillis,
+                        reminderInfo.message,
+                        reminderInfo.name
+                )
             }
-            refreshListView()
-        }.addOnFailureListener{
-            Log.e("firebase", "Error getting data", it)
+        }
+    }
+
+    companion object {
+        //val paymenthistoryList = mutableListOf<PaymentInfo>()
+
+        fun showNofitication(context: Context, message: String, title: String) {
+
+            val CHANNEL_ID = "REMINDER_APP_NOTIFICATION_CHANNEL"
+            var notificationId = Random.nextInt(10, 1000) + 5
+            // notificationId += Random(notificationId).nextInt(1, 500)
+
+            var notificationBuilder = NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.alarm)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setGroup(CHANNEL_ID)
+
+            val notificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+            // Notification chancel needed since Android 8
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(
+                        CHANNEL_ID,
+                        context.getString(R.string.app_name),
+                        NotificationManager.IMPORTANCE_DEFAULT
+                ).apply {
+                    description = context.getString(R.string.app_name)
+                }
+                notificationManager.createNotificationChannel(channel)
+            }
+
+            notificationManager.notify(notificationId, notificationBuilder.build())
+
+        }
+
+        fun setReminderWithWorkManager(
+                context: Context,
+                uid: Int,
+                timeInMillis: Long,
+                message: String,
+                title: String
+        ) {
+
+            val reminderParameters = Data.Builder()
+                    .putString("message", message)
+                    .putString("title", title)
+                    .putInt("uid", uid)
+                    .build()
+
+            // get minutes from now until reminder
+            var minutesFromNow = 0L
+            if (timeInMillis > System.currentTimeMillis())
+                minutesFromNow = timeInMillis - System.currentTimeMillis()
+
+            val reminderRequest = OneTimeWorkRequestBuilder<ReminderWorker>()
+                    .setInputData(reminderParameters)
+                    .setInitialDelay(minutesFromNow, TimeUnit.MILLISECONDS)
+                    .build()
+
+            WorkManager.getInstance(context).enqueue(reminderRequest)
+        }
+
+        fun cancelReminder(context: Context, pendingIntentId: Int) {
+
+            val intent = Intent(context, ReminderReceiver::class.java)
+            val pendingIntent =
+                    PendingIntent.getBroadcast(
+                            context,
+                            pendingIntentId,
+                            intent,
+                            PendingIntent.FLAG_ONE_SHOT
+                    )
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            alarmManager.cancel(pendingIntent)
         }
     }
 }
