@@ -126,14 +126,12 @@ class ReminderList : AppCompatActivity() {
     }
 
     private fun refreshListView() {
-        if (shownListOfReminders != null) {
-            if (shownListOfReminders.isNotEmpty()) {
-                val adaptor = ReminderAdaptor(applicationContext, shownListOfReminders)
-                listView.adapter = adaptor
-            } else {
-                listView.adapter = null
-                Toast.makeText(applicationContext, "No items now", Toast.LENGTH_SHORT).show()
-            }
+        if (shownListOfReminders.isNotEmpty()) {
+            val adaptor = ReminderAdaptor(applicationContext, shownListOfReminders)
+            listView.adapter = adaptor
+        } else {
+            listView.adapter = null
+            Toast.makeText(applicationContext, "No items now", Toast.LENGTH_SHORT).show()
         }
         //var refreshTask = LoadReminderInfoEntries()
         //refreshTask.execute()
@@ -234,31 +232,27 @@ class ReminderList : AppCompatActivity() {
         fun showNofitication(context: Context, message: String, title: String) {
 
             val CHANNEL_ID = "REMINDER_APP_NOTIFICATION_CHANNEL"
-            var notificationId = Random.nextInt(10, 1000) + 5
+            val notificationId = Random.nextInt(10, 1000) + 5
             // notificationId += Random(notificationId).nextInt(1, 500)
 
-            var notificationBuilder = NotificationCompat.Builder(context, CHANNEL_ID)
+            val notificationBuilder = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.alarm)
                 .setContentTitle(title)
                 .setContentText(message)
-                .setStyle(NotificationCompat.BigTextStyle().bigText(message))
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setGroup(CHANNEL_ID)
 
             val notificationManager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
             // Notification chancel needed since Android 8
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = NotificationChannel(
-                        CHANNEL_ID,
-                        context.getString(R.string.app_name),
-                        NotificationManager.IMPORTANCE_DEFAULT
-                ).apply {
-                    description = context.getString(R.string.app_name)
-                }
-                notificationManager.createNotificationChannel(channel)
+            val channel = NotificationChannel(
+                    CHANNEL_ID,
+                    context.getString(R.string.app_name),
+                    NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = context.getString(R.string.app_name)
             }
+            notificationManager.createNotificationChannel(channel)
 
             notificationManager.notify(notificationId, notificationBuilder.build())
 
