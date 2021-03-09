@@ -24,4 +24,6 @@
     <string name="time_created">Time created</string>
     <string name="show_all">Show all</string>
     <string name="make_a_notification">Make a Notification</string>
+    <string name="title_activity_geofence_selection">Map</string>
+    <string name="location">location</string>
 </resources>

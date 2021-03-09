@@ -20,6 +20,9 @@ import com.example.mobilecomputinghomework.databinding.ActivityReminderListBindi
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.example.mobilecomputinghomework.db.ReminderInfo
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.GeofencingClient
+import com.google.android.gms.location.LocationServices
 import com.google.firebase.database.FirebaseDatabase
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
@@ -31,6 +34,8 @@ class ReminderList : AppCompatActivity() {
     private lateinit var database: FirebaseDatabase
     private var listOfReminders = mutableListOf<ReminderInfo>()
     private var shownListOfReminders = mutableListOf<ReminderInfo>()
+    private lateinit var geofencingClient: GeofencingClient
+    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     override fun onBackPressed() {
         finishAffinity()
     }
@@ -39,27 +44,10 @@ class ReminderList : AppCompatActivity() {
         binding = ActivityReminderListBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
-
         listView = binding.reminderList
-
-        //setContentView(R.layout.activity_reminder_list)
         updateNickname()
-        //val listView = findViewById<ListView>(R.id.reminderList)
-
         database = Firebase.database(getString(R.string.firebase_db_url))
         loadReminderInfo()
-
-        //val reference = database.getReference("data/stringList")
-        //reference.push().setValue("hello")
-
-        //var ri = ReminderInfo(123,"note", "date", "time")
-        //val reference1 = database.getReference("data/"+ getLoggedInUsername() +"/reminderList")
-        //reference1.push().setValue(ri)
-
-
-        //val prods = listOf("hello", "bye")
-        //listView.adapter = ArrayAdapter<String>(this,
-        //    android.R.layout.simple_list_item_1, prods)
         findViewById<Button>(R.id.btnLogout).setOnClickListener {
             logout()
         }
@@ -89,6 +77,8 @@ class ReminderList : AppCompatActivity() {
         findViewById<Switch>(R.id.switchShowAll).setOnCheckedChangeListener { _, isChecked ->
             loadReminderInfo()
         }
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+        geofencingClient = LocationServices.getGeofencingClient(this)
     }
 
     private fun getLoggedInUsername(): String? {

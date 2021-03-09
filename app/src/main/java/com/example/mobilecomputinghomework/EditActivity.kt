@@ -3,6 +3,7 @@ package com.example.mobilecomputinghomework
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -22,6 +23,7 @@ class EditActivity() : AppCompatActivity() {
     private lateinit var creation_time: String
     private lateinit var creator_id: String
     private lateinit var reminder_seen: String
+    private lateinit var name: String
     private var timeInMillis by Delegates.notNull<Long>()
     private lateinit var location_x: String
     private lateinit var location_y: String
@@ -33,9 +35,21 @@ class EditActivity() : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit)
         database = Firebase.database(getString(R.string.firebase_db_url))
-        findViewById<Button>(R.id.btnSave).setOnClickListener { save() }
+        findViewById<Button>(R.id.btnSave).setOnClickListener { save(true) }
         updateExisting()
         setUpTimePickers()
+        findViewById<Button>(R.id.btnChooseLocation).setOnClickListener { chooseLocation() }
+    }
+
+    private fun chooseLocation() {
+        save(false)
+        val intent = Intent(this, GeofenceSelectionActivity::class.java)
+        name = findViewById<EditText>(R.id.editTextReminderName).getText().toString()
+        intent.putExtra("key", key)
+        intent.putExtra("name", name)
+        intent.putExtra("location_x", location_x)
+        intent.putExtra("location_y", location_y)
+        startActivity(intent)
     }
 
     private fun updateExisting() {
@@ -49,7 +63,7 @@ class EditActivity() : AppCompatActivity() {
         val name: String? = intent.getStringExtra("name")
         val date: String? = intent.getStringExtra("date")
         val time: String? = intent.getStringExtra("time")
-        val timeInMillis: Long? = intent.getLongExtra("timeInMillis", 0)
+        val timeInMillis: Long = intent.getLongExtra("timeInMillis", 0)
         val message: String? = intent.getStringExtra("message")
         val creation_time: String? = intent.getStringExtra("creation_time")
         val creator_id: String? = intent.getStringExtra("creator_id")
@@ -67,21 +81,12 @@ class EditActivity() : AppCompatActivity() {
             this.message = message
             this.timeInMillis = timeInMillis
             this.makeNotification = makeNotification
+            this.name = name
             textViewTimeEdit.text = time
             textViewDateEdit.text = date
             editTextReminderName.setText(name)
             editTextReminderMessage.setText(message)
-            findViewById<TextView>(R.id.textViewcreationTime).setText(creation_time)
-            findViewById<TextView>(R.id.textViewcreationTime).visibility = View.VISIBLE
-            findViewById<TextView>(R.id.textViewCreationTimeDescriptor).visibility = View.VISIBLE
-            findViewById<CheckBox>(R.id.notifcationCheck).isChecked = makeNotification
-            val deleteBtn = findViewById<Button>(R.id.btnDeleteReminder)
-            deleteBtn.visibility = View.VISIBLE
-            deleteBtn.setOnClickListener {
-                val reference = database.getReference("data/users/"+ getLoggedInUsername() +"/reminderList/" + key)
-                reference.removeValue()
-                finish()
-            }
+            switchEditMode()
         }
         else {
             this.key = ""
@@ -90,10 +95,30 @@ class EditActivity() : AppCompatActivity() {
             this.location_x = ""
             this.location_y = ""
             this.timeInMillis = System.currentTimeMillis()
+            this.name = ""
+            this.makeNotification = true
         }
     }
-
-    private fun save() {
+    private fun switchEditMode() {
+        findViewById<TextView>(R.id.textViewcreationTime).setText(creation_time)
+        findViewById<TextView>(R.id.textViewcreationTime).visibility = View.VISIBLE
+        findViewById<TextView>(R.id.textViewCreationTimeDescriptor).visibility = View.VISIBLE
+        findViewById<CheckBox>(R.id.notifcationCheck).isChecked = makeNotification
+        val deleteBtn = findViewById<Button>(R.id.btnDeleteReminder)
+        deleteBtn.visibility = View.VISIBLE
+        deleteBtn.setOnClickListener {
+            val reference = database.getReference("data/users/"+ getLoggedInUsername() +"/reminderList/" + key)
+            reference.removeValue()
+            finish()
+        }
+    }
+    override fun onResume() {
+        super.onResume()
+        if (key != "") {
+            switchEditMode()
+        }
+    }
+    private fun save(exit: Boolean) {
         if (key == "") {
             this.creation_time = SimpleDateFormat("HH:mm dd.MM.yyyy").format(System.currentTimeMillis())
         }
@@ -119,7 +144,7 @@ class EditActivity() : AppCompatActivity() {
                 location_y
         )
         )
-        finish()
+        if (exit) finish()
     }
 
     private fun uploadNewReminder(reminderInfo: ReminderInfo) {
@@ -128,8 +153,10 @@ class EditActivity() : AppCompatActivity() {
             reference.setValue(reminderInfo)
         }
         else {
-            val reference = database.getReference("data/users/"+ getLoggedInUsername() +"/reminderList")
-            reference.push().setValue(reminderInfo)
+            var reference = database.getReference("data/users/"+ getLoggedInUsername() +"/reminderList")
+            reference = reference.push()
+            reference.setValue(reminderInfo)
+            key = reference.key!!
         }
     }
 
