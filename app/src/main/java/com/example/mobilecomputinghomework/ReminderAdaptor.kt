@@ -17,8 +17,8 @@ class ReminderAdaptor(context: Context, private  val list:List<ReminderInfo>): B
 
         //set payment info values to the list item
         row.txtName.text=list[position].name
-        row.txtDate.text=list[position].date
-        row.txtTime.text=list[position].time
+        row.txtDate.text=list[position].message
+        row.txtTime.text=list[position].creation_time
         return  row.root
     }
     override fun getItem(position: Int): Any {

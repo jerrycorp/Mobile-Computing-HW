@@ -31,4 +31,6 @@
     <string name="real_location">debug location</string>
     <string name="delete_location">delete \n location</string>
     <string name="use_time_for_notification">Use time for notification</string>
+    <string name="reminder_message">Reminder message</string>
+    <string name="reminder_creation_time">Reminder creation time</string>
 </resources>
