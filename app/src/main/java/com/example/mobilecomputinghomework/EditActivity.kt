@@ -22,7 +22,6 @@ import kotlin.properties.Delegates
 class EditActivity() : AppCompatActivity() {
     private lateinit var creation_time: String
     private lateinit var creator_id: String
-    private lateinit var reminder_seen: String
     private lateinit var name: String
     private var timeInMillis by Delegates.notNull<Long>()
     private lateinit var location_x: String
@@ -67,15 +66,13 @@ class EditActivity() : AppCompatActivity() {
         val message: String? = intent.getStringExtra("message")
         val creation_time: String? = intent.getStringExtra("creation_time")
         val creator_id: String? = intent.getStringExtra("creator_id")
-        val reminder_seen: String? = intent.getStringExtra("reminder_seen")
         val location_x: String? = intent.getStringExtra("location_x")
         val location_y: String? = intent.getStringExtra("location_y")
         val makeNotification: Boolean = intent.getBooleanExtra("makeNotification", false)
-        if (key != null && name != null && date != null && time != null && creation_time != null && creator_id != null && reminder_seen != null && location_x != null && location_y != null && message != null &&timeInMillis != null) {
+        if (key != null && name != null && date != null && time != null && creation_time != null && creator_id != null && location_x != null && location_y != null && message != null) {
             this.key = key
             this.creation_time = creation_time
             this.creator_id = creator_id
-            this.reminder_seen = reminder_seen
             this.location_x = location_x
             this.location_y = location_y
             this.message = message
@@ -91,7 +88,6 @@ class EditActivity() : AppCompatActivity() {
         else {
             this.key = ""
             this.creator_id = getLoggedInUsername()!!
-            this.reminder_seen = ""
             this.location_x = ""
             this.location_y = ""
             this.timeInMillis = System.currentTimeMillis()
@@ -115,6 +111,11 @@ class EditActivity() : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         if (key != "") {
+            val reference = database.getReference("data/users/"+ getLoggedInUsername() +"/reminderList/" + key)
+            reference.get().addOnSuccessListener {
+                location_x = it.child("location_x").value as String
+                location_y = it.child("location_y").value as String
+            }
             switchEditMode()
         }
     }
@@ -139,7 +140,7 @@ class EditActivity() : AppCompatActivity() {
                 editTextReminderMessage.getText().toString(),
                 creation_time,
                 creator_id,
-                reminder_seen,
+                false,
                 location_x,
                 location_y
         )

@@ -1,18 +1,23 @@
 package com.example.mobilecomputinghomework
 
+import android.Manifest
 import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Location
 import android.os.AsyncTask
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.*
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -20,12 +25,18 @@ import com.example.mobilecomputinghomework.databinding.ActivityReminderListBindi
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.example.mobilecomputinghomework.db.ReminderInfo
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.GeofencingClient
-import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.*
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.database.FirebaseDatabase
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
+
+const val LOCATION_REQUEST_CODE = 123
+const val GEOFENCE_LOCATION_REQUEST_CODE = 12345
+const val GEOFENCE_RADIUS = 500
+const val GEOFENCE_ID = "REMINDER_GEOFENCE_ID"
+const val GEOFENCE_EXPIRATION = 10 * 24 * 60 * 1000 //10 days
+const val GEOFENCE_DWELL_DELAY = 10 * 1000 //10 seconds
 
 class ReminderList : AppCompatActivity() {
 
@@ -36,6 +47,8 @@ class ReminderList : AppCompatActivity() {
     private var shownListOfReminders = mutableListOf<ReminderInfo>()
     private lateinit var geofencingClient: GeofencingClient
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+    private var listOfGeofenceKeys = mutableListOf<String>()
+    private lateinit var lastLocation: Location
     override fun onBackPressed() {
         finishAffinity()
     }
@@ -44,6 +57,23 @@ class ReminderList : AppCompatActivity() {
         binding = ActivityReminderListBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
+        //permission check
+        if (!isLocationPermissionGranted()) {
+            val permissions = mutableListOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            ActivityCompat.requestPermissions(
+                this,
+                permissions.toTypedArray(),
+                LOCATION_REQUEST_CODE
+            )
+        }
+        else {
+            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+            geofencingClient = LocationServices.getGeofencingClient(this)
+        }
+        lastLocation = getSavedLocation()
         listView = binding.reminderList
         updateNickname()
         database = Firebase.database(getString(R.string.firebase_db_url))
@@ -77,10 +107,22 @@ class ReminderList : AppCompatActivity() {
         findViewById<Switch>(R.id.switchShowAll).setOnCheckedChangeListener { _, isChecked ->
             loadReminderInfo()
         }
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-        geofencingClient = LocationServices.getGeofencingClient(this)
+
     }
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        if (!isLocationPermissionGranted()) {
+            Toast.makeText(
+                applicationContext,
+                "This application requires location access\n Enable it from system settings since android API 11",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
     private fun getLoggedInUsername(): String? {
         return applicationContext.getSharedPreferences(
             "com.example.mobilecomputinghomework",
@@ -114,7 +156,19 @@ class ReminderList : AppCompatActivity() {
         updateNickname()
         loadReminderInfo()
     }
-
+    private fun getSavedLocation(): Location {
+        val username = getLoggedInUsername()
+        val x = applicationContext.getSharedPreferences(
+            "com.example.mobilecomputinghomework",
+            Context.MODE_PRIVATE).getFloat("x$username", 65.0128475326F).toDouble()
+        val y = applicationContext.getSharedPreferences(
+            "com.example.mobilecomputinghomework",
+            Context.MODE_PRIVATE).getFloat("y$username", 25.4668877983F).toDouble()
+        val loc = Location("")
+        loc.latitude = x
+        loc.longitude = y
+        return loc
+    }
     private fun refreshListView() {
         if (shownListOfReminders.isNotEmpty()) {
             val adaptor = ReminderAdaptor(applicationContext, shownListOfReminders)
@@ -122,35 +176,6 @@ class ReminderList : AppCompatActivity() {
         } else {
             listView.adapter = null
             Toast.makeText(applicationContext, "No items now", Toast.LENGTH_SHORT).show()
-        }
-        //var refreshTask = LoadReminderInfoEntries()
-        //refreshTask.execute()
-
-    }
-    inner class LoadReminderInfoEntries : AsyncTask<String?, String?, List<ReminderInfo>>() {
-        override fun doInBackground(vararg params: String?): List<ReminderInfo> {
-
-            //val reference1 = database.getReference("data/"+ getLoggedInUsername() +"/reminderList")
-            //reference1.get().addOnSuccessListener {
-            //    Log.i("firebase", "Got value ${it.key}")
-            //}.addOnFailureListener{
-            //    Log.e("firebase", "Error getting data", it)
-            //}
-            //return listOf(ReminderInfo(123,"name", "date", "time"))
-            return shownListOfReminders
-        }
-
-        override fun onPostExecute(reminderInfos: List<ReminderInfo>?) {
-            super.onPostExecute(reminderInfos)
-            if (reminderInfos != null) {
-                if (reminderInfos.isNotEmpty()) {
-                    val adaptor = ReminderAdaptor(applicationContext, reminderInfos)
-                    listView.adapter = adaptor
-                } else {
-                    listView.adapter = null
-                    Toast.makeText(applicationContext, "No items now", Toast.LENGTH_SHORT).show()
-                }
-            }
         }
 
     }
@@ -172,7 +197,7 @@ class ReminderList : AppCompatActivity() {
                             reminderInfo.child("message").value as String,
                             reminderInfo.child("creation_time").value as String,
                             reminderInfo.child("creator_id").value as String,
-                            reminderInfo.child("reminder_seen").value as String,
+                            reminderInfo.child("reminder_seen").value as Boolean,
                             reminderInfo.child("location_x").value as String,
                             reminderInfo.child("location_y").value as String
                     ))
@@ -180,19 +205,38 @@ class ReminderList : AppCompatActivity() {
                 val showAll: Boolean = findViewById<Switch>(R.id.switchShowAll).isChecked
                 val currentTimeInMillis = System.currentTimeMillis()
                 shownListOfReminders = mutableListOf<ReminderInfo>()
+                LocationServices.getGeofencingClient(applicationContext).removeGeofences(listOfGeofenceKeys)
+                listOfGeofenceKeys = mutableListOf<String>()
                 for (reminderInfo in listOfReminders) {
-                    Log.i("time", currentTimeInMillis.toString() + " " + reminderInfo.timeInMillis.toString())
-                    if (showAll or (reminderInfo.timeInMillis < currentTimeInMillis)) {
-                        Log.i("time", "show this thing " + reminderInfo.name)
+                    var inside = false
+                    if (reminderInfo.location_x != "" && reminderInfo.location_y != "") {
+                        val loc = Location("")
+                        loc.latitude = reminderInfo.location_x.toDouble()
+                        loc.longitude = reminderInfo.location_y.toDouble()
+                        if (loc.distanceTo(lastLocation) < GEOFENCE_RADIUS) {
+                            inside = true
+                            if (!reminderInfo.reminder_seen && reminderInfo.makeNotification) {
+                                showNofitication(applicationContext,reminderInfo.message, reminderInfo.name)
+                                database.getReference("data/users/"+ getLoggedInUsername() +"/reminderList/" + reminderInfo.key + "/reminder_seen").setValue(true)
+                            }
+                        }
+                        else {
+                            createGeoFence(reminderInfo, geofencingClient)
+                        }
+                    }
+                    else {
+                        inside = true
+                    }
+                    if (showAll || (reminderInfo.timeInMillis < currentTimeInMillis || inside)) {
                         shownListOfReminders.add(reminderInfo)
-                    } else {
-                        Log.i("time", "don't show this thing " + reminderInfo.name)
                     }
                 }
                 refreshListView()
                 addNotifications()
             }.addOnFailureListener {
                 Log.e("firebase", "Error getting data", it)
+                database.goOnline()
+                loadReminderInfo()
             }
         }catch (e: java.lang.Exception){
             database.goOnline()
@@ -216,9 +260,41 @@ class ReminderList : AppCompatActivity() {
         }
     }
 
-    companion object {
-        //val paymenthistoryList = mutableListOf<PaymentInfo>()
+    private fun isLocationPermissionGranted(): Boolean {
+        return (ContextCompat.checkSelfPermission(
+            applicationContext, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(
+            applicationContext, Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED) && ContextCompat.checkSelfPermission(
+            applicationContext, Manifest.permission.ACCESS_BACKGROUND_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
 
+    private fun createGeoFence(reminder: ReminderInfo, geofencingClient: GeofencingClient) {
+        val key = reminder.key
+        val location = LatLng(reminder.location_x.toDouble(), reminder.location_y.toDouble())
+        val message = reminder.message
+        val geofence = Geofence.Builder()
+            .setRequestId(GEOFENCE_ID)
+            .setCircularRegion(location.latitude, location.longitude, GEOFENCE_RADIUS.toFloat())
+            .setExpirationDuration(GEOFENCE_EXPIRATION.toLong())
+            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_DWELL)
+            .setLoiteringDelay(GEOFENCE_DWELL_DELAY)
+            .build()
+
+        val geofenceRequest = GeofencingRequest.Builder()
+            .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
+            .addGeofence(geofence)
+            .build()
+
+        val intent = Intent(this, GeofenceReceiver::class.java)
+            .putExtra("key", key)
+            .putExtra("message", "Geofence alert - ${location.latitude}, ${location.longitude}" +
+            "\n" + message)
+            .putExtra("user", getLoggedInUsername())
+    }
+
+    companion object {
         fun showNofitication(context: Context, message: String, title: String) {
 
             val CHANNEL_ID = "REMINDER_APP_NOTIFICATION_CHANNEL"
@@ -275,18 +351,8 @@ class ReminderList : AppCompatActivity() {
             WorkManager.getInstance(context).enqueue(reminderRequest)
         }
 
-        fun cancelReminder(context: Context, pendingIntentId: Int) {
-
-            val intent = Intent(context, ReminderReceiver::class.java)
-            val pendingIntent =
-                    PendingIntent.getBroadcast(
-                            context,
-                            pendingIntentId,
-                            intent,
-                            PendingIntent.FLAG_ONE_SHOT
-                    )
-            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            alarmManager.cancel(pendingIntent)
+        fun removeGeofence(context: Context, key: String) {
+            LocationServices.getGeofencingClient(context).removeGeofences(mutableListOf(key))
         }
     }
 }

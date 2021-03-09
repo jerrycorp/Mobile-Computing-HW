@@ -1,9 +1,12 @@
 package com.example.mobilecomputinghomework
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -41,6 +44,7 @@ class GeofenceSelectionActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun saveLocation() {
         database.getReference("data/users/"+ getLoggedInUsername() +"/reminderList/" + key + "/location_x").setValue(latLng.latitude.toString())
         database.getReference("data/users/"+ getLoggedInUsername() +"/reminderList/" + key + "/location_y").setValue(latLng.longitude.toString())
+        database.getReference("data/users/"+ getLoggedInUsername() +"/reminderList/" + key + "/reminder_seen").setValue(false)
         finish()
     }
 
@@ -51,24 +55,27 @@ class GeofenceSelectionActivity : AppCompatActivity(), OnMapReadyCallback {
         location_y = intent.getStringExtra("location_y")!!
     }
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
-
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
         latLng = LatLng(65.01284753266825, 25.466887798384903)
         reminderMarker = map.addMarker(MarkerOptions().position(latLng).title("reminderMarker"))
-        map.moveCamera(CameraUpdateFactory.newLatLng(latLng))
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
         if (location_x != "" && location_y != "") {
             updateMarker(LatLng(location_x.toDouble(), location_y.toDouble()))
         }
+        map.uiSettings.isCompassEnabled = true
+        map.uiSettings.isZoomControlsEnabled = true
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        map.isMyLocationEnabled = true
         onLongClick(map)
     }
 
