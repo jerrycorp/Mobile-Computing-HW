@@ -11,6 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:ems="10"
+        android:importantForAutofill="no"
         android:inputType="textPersonName"
         android:text="@string/reminder_name"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -18,8 +19,7 @@
         app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.185"
-        android:importantForAutofill="no" />
+        app:layout_constraintVertical_bias="0.086" />
 
     <TextView
         android:id="@+id/textViewTimeEdit"
@@ -142,5 +142,29 @@
         app:layout_constraintEnd_toStartOf="@+id/btnSave"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/btnSave" />
+
+    <Button
+        android:id="@+id/btnDeleteLocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/delete_location"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/btnDeleteReminder"
+        app:layout_constraintEnd_toEndOf="@+id/btnChooseLocation"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/btnChooseLocation"
+        app:layout_constraintTop_toTopOf="@+id/btnDeleteReminder"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <CheckBox
+        android:id="@+id/checkBoxUseTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/use_time_for_notification"
+        app:layout_constraintEnd_toEndOf="@+id/notifcationCheck"
+        app:layout_constraintHorizontal_bias="0.483"
+        app:layout_constraintStart_toStartOf="@+id/notifcationCheck"
+        app:layout_constraintTop_toBottomOf="@+id/notifcationCheck" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -26,4 +26,9 @@
     <string name="make_a_notification">Make a Notification</string>
     <string name="title_activity_geofence_selection">Map</string>
     <string name="location">location</string>
+    <string name="title_activity_select_current_location">Map</string>
+    <string name="set_location">Set location</string>
+    <string name="real_location">debug location</string>
+    <string name="delete_location">delete \n location</string>
+    <string name="use_time_for_notification">Use time for notification</string>
 </resources>

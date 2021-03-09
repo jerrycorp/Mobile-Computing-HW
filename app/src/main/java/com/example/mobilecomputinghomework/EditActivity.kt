@@ -19,6 +19,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.properties.Delegates
 
+const val MAX_LONG = 9223372036854775807
 class EditActivity() : AppCompatActivity() {
     private lateinit var creation_time: String
     private lateinit var creator_id: String
@@ -84,6 +85,9 @@ class EditActivity() : AppCompatActivity() {
             editTextReminderName.setText(name)
             editTextReminderMessage.setText(message)
             switchEditMode()
+            if (!(timeInMillis == MAX_LONG)) {
+                findViewById<CheckBox>(R.id.checkBoxUseTime).isChecked = true
+            }
         }
         else {
             this.key = ""
@@ -107,6 +111,16 @@ class EditActivity() : AppCompatActivity() {
             reference.removeValue()
             finish()
         }
+        if (location_x != "" && location_y != "") {
+            val deleteLocationBtn = findViewById<Button>(R.id.btnDeleteLocation)
+            deleteLocationBtn.visibility = View.VISIBLE
+            deleteLocationBtn.setOnClickListener {
+                location_x = ""
+                location_y = ""
+                deleteLocationBtn.visibility = View.GONE
+            }
+
+        }
     }
     override fun onResume() {
         super.onResume()
@@ -115,6 +129,7 @@ class EditActivity() : AppCompatActivity() {
             reference.get().addOnSuccessListener {
                 location_x = it.child("location_x").value as String
                 location_y = it.child("location_y").value as String
+                switchEditMode()
             }
             switchEditMode()
         }
@@ -129,7 +144,11 @@ class EditActivity() : AppCompatActivity() {
         val editTextReminderMessage = findViewById<EditText>(R.id.editTextreminderMessage)
         val date = textViewDateEdit.getText().toString()
         val time = textViewTimeEdit.getText().toString()
-        timeInMillis = SimpleDateFormat("HH:mm dd.MM.yyyy", Locale.getDefault()).parse(time + " " + date).time
+        if (findViewById<CheckBox>(R.id.checkBoxUseTime).isChecked) {
+            timeInMillis = SimpleDateFormat("HH:mm dd.MM.yyyy", Locale.getDefault()).parse(time + " " + date).time
+        } else {
+            timeInMillis = MAX_LONG
+        }
         uploadNewReminder(ReminderInfo(123,
                 "",
                 editTextReminderName.getText().toString(),

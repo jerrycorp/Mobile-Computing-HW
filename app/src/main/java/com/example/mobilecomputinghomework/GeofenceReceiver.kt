@@ -3,13 +3,11 @@ package com.example.mobilecomputinghomework
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.example.mobilecomputinghomework.db.ReminderDao_Impl
+import android.util.Log
+import android.widget.Toast
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 

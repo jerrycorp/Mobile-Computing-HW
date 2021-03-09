@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
+import android.location.LocationManager
 import android.os.AsyncTask
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
@@ -72,11 +73,30 @@ class ReminderList : AppCompatActivity() {
         else {
             fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
             geofencingClient = LocationServices.getGeofencingClient(this)
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
+            fusedLocationProviderClient.lastLocation
+                .addOnSuccessListener { location : Location? ->
+                    if (location != null) {
+                        Log.i("fusedLocation", "current location is $location")
+                        lastLocation = location
+                        loadReminderInfo()
+                    }
+                }
         }
-        lastLocation = getSavedLocation()
+        getSavedLocation()
         listView = binding.reminderList
         updateNickname()
         database = Firebase.database(getString(R.string.firebase_db_url))
+        database.getReference("data/users/"+ getLoggedInUsername() +"/accessed").setValue(System.currentTimeMillis())
         loadReminderInfo()
         findViewById<Button>(R.id.btnLogout).setOnClickListener {
             logout()
@@ -86,6 +106,9 @@ class ReminderList : AppCompatActivity() {
         }
         findViewById<ImageButton>(R.id.btnNewReminder).setOnClickListener {
             startActivity(Intent(applicationContext, EditActivity::class.java))
+        }
+        findViewById<Button>(R.id.btnDebugLocation).setOnClickListener {
+            startActivity(Intent(applicationContext, SelectCurrentLocationActivity::class.java))
         }
         listView.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, id ->
             val selectedReminder = listView.adapter.getItem(position) as ReminderInfo
@@ -105,6 +128,10 @@ class ReminderList : AppCompatActivity() {
             startActivity(intent)
         }
         findViewById<Switch>(R.id.switchShowAll).setOnCheckedChangeListener { _, isChecked ->
+            loadReminderInfo()
+        }
+        findViewById<Switch>(R.id.switchDebugLocation).setOnCheckedChangeListener { _, isChecked ->
+            getSavedLocation()
             loadReminderInfo()
         }
 
@@ -154,20 +181,44 @@ class ReminderList : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         updateNickname()
+        getSavedLocation()
         loadReminderInfo()
     }
-    private fun getSavedLocation(): Location {
-        val username = getLoggedInUsername()
-        val x = applicationContext.getSharedPreferences(
-            "com.example.mobilecomputinghomework",
-            Context.MODE_PRIVATE).getFloat("x$username", 65.0128475326F).toDouble()
-        val y = applicationContext.getSharedPreferences(
-            "com.example.mobilecomputinghomework",
-            Context.MODE_PRIVATE).getFloat("y$username", 25.4668877983F).toDouble()
-        val loc = Location("")
-        loc.latitude = x
-        loc.longitude = y
-        return loc
+    private fun getSavedLocation() {
+        if (findViewById<Switch>(R.id.switchDebugLocation).isChecked) {
+            val username = getLoggedInUsername()
+            val x = applicationContext.getSharedPreferences(
+                "com.example.mobilecomputinghomework",
+                Context.MODE_PRIVATE).getFloat("x$username", 0F).toDouble()
+            val y = applicationContext.getSharedPreferences(
+                "com.example.mobilecomputinghomework",
+                Context.MODE_PRIVATE).getFloat("y$username", 0F).toDouble()
+            val loc = Location("")
+            loc.latitude = x
+            loc.longitude = y
+            lastLocation = loc
+        } else {
+            if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+            fusedLocationProviderClient.lastLocation
+                .addOnSuccessListener { location : Location? ->
+                    if (location != null) {
+                        Log.i("geo", "current location is ${location.latitude}, ${location.longitude}")
+                        lastLocation = location
+                        loadReminderInfo()
+                    } else {
+                        Log.i("geo", "no location received from fused location provider")
+                    }
+                }
+        }
     }
     private fun refreshListView() {
         if (shownListOfReminders.isNotEmpty()) {
@@ -185,7 +236,7 @@ class ReminderList : AppCompatActivity() {
             reference1.get().addOnSuccessListener {
                 listOfReminders = mutableListOf<ReminderInfo>()
                 for (reminderInfo in it.children) {
-                    Log.i("firebase", "a child" + reminderInfo.child("name").value as String)
+                    Log.i("firebase", "a child: " + reminderInfo.child("name").value as String)
                     listOfReminders.add(ReminderInfo(
                             (reminderInfo.child("uid").value as Long).toInt(),
                             reminderInfo.key.toString(),
@@ -213,6 +264,7 @@ class ReminderList : AppCompatActivity() {
                         val loc = Location("")
                         loc.latitude = reminderInfo.location_x.toDouble()
                         loc.longitude = reminderInfo.location_y.toDouble()
+                        Log.i("geo", "distance to ${reminderInfo.name} is ${loc.distanceTo(lastLocation).toString()}")
                         if (loc.distanceTo(lastLocation) < GEOFENCE_RADIUS) {
                             inside = true
                             if (!reminderInfo.reminder_seen && reminderInfo.makeNotification) {
@@ -221,7 +273,9 @@ class ReminderList : AppCompatActivity() {
                             }
                         }
                         else {
-                            createGeoFence(reminderInfo, geofencingClient)
+                            if (reminderInfo.makeNotification && reminderInfo.timeInMillis > currentTimeInMillis) {
+                                createGeoFence(reminderInfo, geofencingClient)
+                            }
                         }
                     }
                     else {
@@ -236,6 +290,7 @@ class ReminderList : AppCompatActivity() {
             }.addOnFailureListener {
                 Log.e("firebase", "Error getting data", it)
                 database.goOnline()
+                database.getReference("data/users/"+ getLoggedInUsername() +"/accessed").setValue(System.currentTimeMillis())
                 loadReminderInfo()
             }
         }catch (e: java.lang.Exception){
@@ -292,6 +347,36 @@ class ReminderList : AppCompatActivity() {
             .putExtra("message", "Geofence alert - ${location.latitude}, ${location.longitude}" +
             "\n" + message)
             .putExtra("user", getLoggedInUsername())
+        val pendingIntent = PendingIntent.getBroadcast(
+            applicationContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            Log.e("geo", "missing permissions")
+            return
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (ContextCompat.checkSelfPermission(
+                    applicationContext, Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(
+                        Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                    ),
+                    GEOFENCE_LOCATION_REQUEST_CODE
+                )
+            } else {
+                Log.i("geo", "geofencebuilt")
+                geofencingClient.addGeofences(geofenceRequest, pendingIntent)
+            }
+        } else {
+            Log.i("geo", "geofencebuilt")
+            geofencingClient.addGeofences(geofenceRequest, pendingIntent)
+        }
     }
 
     companion object {
